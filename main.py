@@ -33,6 +33,10 @@ class Operator:
         event_id = config.get_config_value("eventId")
         input_value = inputs[0].current_value
         value = input_value
+
+        if from_characteristic == "":
+            from_characteristic = self.get_from_characteristic_of_group(config, inputs[0])
+
         if from_characteristic != "" and to_characteristic != "" and from_characteristic != to_characteristic:
             cast_result = self.converter.cast(input_value, from_characteristic, to_characteristic)
             if not isinstance(cast_result, dict):
@@ -49,6 +53,18 @@ class Operator:
             self.trigger(engine_url, event_id, value)
 
         return Output(False, {})
+
+    def get_from_characteristic_of_group(self, config: Config, inp: Input):
+        topic = inp.current_topic
+        path = inp.current_source
+        key = topic+"::"+path
+        group_convert_from_str = config.get_config_value("groupConvertFrom", "")
+        if group_convert_from_str == "" or topic == "" or path == "":
+            return ""
+        group_convert_from_map = json.loads(group_convert_from_str)
+        if key in group_convert_from_map:
+            return group_convert_from_map[key]
+        return ""
 
     def get_converter(self):
         return self.converter
